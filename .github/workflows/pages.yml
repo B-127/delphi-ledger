@@ -1,0 +1,46 @@
+name: Deploy to Pages
+
+# Uploads the repository as-is. No Ruby, no Jekyll, so the /docs error cannot recur
+# and directories named vendor are not silently skipped.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reporting calendar
+        run: node tests/quarter.test.mjs
+      - name: Identity checks
+        run: node tests/validate.test.mjs
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+      - id: deployment
+        uses: actions/deploy-pages@v4
