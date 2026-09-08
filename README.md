@@ -1,35 +1,18 @@
-# Quarterly collection
+# Delphi Ledger
 
-Upload each bank's interim statement, have the figures checked against the bank's own
+Tool to upload each bank's interim statement, have the figures checked against the bank's own
 printed totals, and write them into the two workbooks without breaking a formula.
-
-Everything runs in the browser. There is no server, which on GitHub Pages is not a
-compromise: the PDFs and the workbooks never leave the machine, because there is
-nowhere for them to go.
-
-## Running it
-
-Deployment is the repository. Push these files and enable Pages on the branch — the
-`.nojekyll` file stops Jekyll from hiding the `src` directory. No build step, no
-bundler, no `npm install`. Locally, any static server will do:
-
-    python3 -m http.server 8080
-
-Tests run under Node with no dependencies:
-
-    node tests/quarter.test.mjs      # 22 assertions on the reporting calendar
-    node tests/validate.test.mjs     # 21 assertions on the identity checks
 
 ## How a filing works
 
-1. **The quarter is derived, never asked.** Reports are published 45 days after a
+1. **The quarter is derived** Reports are published 45 days after a
    quarter ends, so the filable quarter is the most recent one whose end date plus 45
    days has passed. In the 45 days after a quarter closes that is *two* quarters back,
    not one — on 10 July 2026 you are in Q3 and still filing Q1. `src/quarter.js`.
 2. **The upload is read.** `pdf.js` returns text with coordinates, and table structure
    is rebuilt by clustering those positions rather than trusting reading order — the
    thing that breaks when a bank reorders columns mid-table.
-3. **Rows are matched by template, then confirmed by anchor.** Where a label is
+3. **Rows are matched by template, then confirmed** Where a label is
    ambiguous, the comparative column in the report is matched against what the model
    already holds for the prior quarter. A row that anchors has identified itself
    regardless of what its label says.
