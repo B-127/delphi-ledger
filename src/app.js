@@ -7,6 +7,7 @@ import { Workbook } from './workbook.js';
 
 const T = targetQuarter();
 const state = {
+  selected: null,
   workbooks: { model: null, loan: null },
   banks: new Map(),   // code -> { status, file, result, extraction }
 };
@@ -38,10 +39,13 @@ function paintGrid() {
     const s = state.banks.get(bank.code);
     const status = bank.inactive ? 'out' : (s?.status ?? 'empty');
 
-    const el = document.createElement(bank.inactive ? 'div' : 'label');
+    const el = document.createElement(bank.inactive ? 'div' : 'button');
     el.className = 'bank';
     el.dataset.state = status;
-    if (!bank.inactive) el.tabIndex = 0;
+    if (!bank.inactive) {
+      el.type = 'button';
+      if (state.selected === bank.code) el.setAttribute('aria-current', 'true');
+    }
 
     const top = document.createElement('div');
     top.className = 'bank-top';
@@ -62,17 +66,15 @@ function paintGrid() {
     el.append(st);
 
     if (!bank.inactive) {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.pdf';
-      input.addEventListener('change', (e) => {
-        const f = e.target.files?.[0];
-        if (f) handleUpload(bank, f);
-        e.target.value = '';
-      });
-      el.append(input);
-      el.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); }
+      el.setAttribute('aria-label', s?.result
+        ? `${bank.name}: ${stateText(bank, s)}. Open the check results.`
+        : `${bank.name}: upload the ${T.label} statement.`);
+      el.addEventListener('click', () => {
+        // A bank that has already been read reopens its results. Only an empty
+        // card goes straight to the file picker, so a failed upload can always
+        // be looked at again rather than being overwritten by the next one.
+        if (state.banks.get(bank.code)?.result) showReview(bank);
+        else pickFile(bank);
       });
     }
     grid.append(el);
@@ -93,6 +95,25 @@ function stateText(bank, s) {
 function setBank(code, patch) {
   state.banks.set(code, { ...(state.banks.get(code) ?? {}), ...patch });
   paintGrid();
+}
+
+/** One hidden input, reused. Cards are buttons so a click can mean two things. */
+function pickFile(bank) {
+  let input = document.getElementById('picker');
+  if (!input) {
+    input = document.createElement('input');
+    input.type = 'file';
+    input.id = 'picker';
+    input.accept = '.pdf';
+    input.hidden = true;
+    document.body.append(input);
+  }
+  input.onchange = (e) => {
+    const f = e.target.files?.[0];
+    e.target.value = '';
+    if (f) handleUpload(bank, f);
+  };
+  input.click();
 }
 
 // ---------------------------------------------------------------- upload
@@ -191,11 +212,14 @@ function showReview(bank) {
   const body = document.getElementById('review-body');
   body.textContent = '';
 
-  if (!s?.result) { sec.hidden = true; return; }
+  if (!s?.result) { sec.hidden = true; state.selected = null; paintGrid(); return; }
   sec.hidden = false;
+  state.selected = bank.code;
+  paintGrid();
   head.textContent = s.status === 'filed'
     ? `${bank.name} — ${T.label} filed`
     : `${bank.name} — ${T.label} held for review`;
+  sec.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
 
   for (const c of s.result.checks) {
     const row = document.createElement('div');
@@ -227,9 +251,10 @@ function showReview(bank) {
       : `Written to ${targetTabs(bank).map((t) => t.tab).join(', ')}.`;
   body.append(foot);
 
+  const actions = document.createElement('div');
+  actions.className = 'review-actions';
+
   if (s.result.confirm && !s.result.blocking) {
-    const actions = document.createElement('div');
-    actions.className = 'review-actions';
     const accept = document.createElement('button');
     accept.className = 'primary';
     accept.textContent = 'Accept and file';
@@ -239,17 +264,27 @@ function showReview(bank) {
       showReview(bank);
       refreshActions();
     });
-    const reject = document.createElement('button');
-    reject.className = 'ghost';
-    reject.textContent = 'Discard this upload';
-    reject.addEventListener('click', () => {
-      state.banks.delete(bank.code);
-      paintGrid();
-      document.getElementById('review').hidden = true;
-    });
-    actions.append(accept, reject);
-    body.append(actions);
+    actions.append(accept);
   }
+
+  const replace = document.createElement('button');
+  replace.className = s.result.blocking ? 'primary' : 'ghost';
+  replace.textContent = 'Upload a different PDF';
+  replace.addEventListener('click', () => pickFile(bank));
+  actions.append(replace);
+
+  const clear = document.createElement('button');
+  clear.className = 'ghost';
+  clear.textContent = 'Discard this upload';
+  clear.addEventListener('click', () => {
+    state.banks.delete(bank.code);
+    state.selected = null;
+    paintGrid();
+    document.getElementById('review').hidden = true;
+    refreshActions();
+  });
+  actions.append(clear);
+  body.append(actions);
 }
 
 // ---------------------------------------------------------------- workbooks
