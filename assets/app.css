@@ -124,7 +124,9 @@ button:focus-visible, label:focus-within { outline: 2px solid var(--navy); outli
 .bank-code { font-family: var(--serif); font-size: 16px; font-weight: 500; }
 .bank-name { font-size: 12px; color: var(--ink-3); display: block; margin-top: 1px; }
 .bank-state { font-size: 12.5px; margin-top: 7px; font-family: var(--mono); }
-.bank input { display: none; }
+.bank { font: inherit; color: inherit; cursor: pointer; font-family: var(--sans); }
+.bank[aria-current="true"] { box-shadow: inset 0 0 0 2px var(--navy); }
+.bank:hover:not([data-state="out"]) { border-color: var(--navy); }
 
 .bank[data-state="empty"] { border-style: dashed; }
 .bank[data-state="empty"] .bank-state { color: var(--ink-3); }
