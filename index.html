@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Quarterly collection — Frontier Research</title>
+<title>Delphi Ledger</title>
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'none';
   script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'wasm-unsafe-eval';
@@ -20,7 +20,7 @@
 <body>
 
 <header class="bar">
-  <div class="bar-title">Quarterly collection</div>
+  <div class="bar-title">Delphi Ledger - Banking</div>
   <div class="bar-right">
     <span class="firm">Frontier Research</span>
     <button id="theme" class="ghost" aria-label="Switch to dark theme">Dark</button>
@@ -64,8 +64,7 @@
 
   <section class="outputs">
     <h2>Workbooks</h2>
-    <p class="outputs-note" id="wb-note">Load the two workbooks to begin. They stay on this
-       machine — nothing is uploaded anywhere, because there is no server to upload to.</p>
+    <p class="outputs-note" id="wb-note">Load the two workbooks to begin. </p>
     <div class="wb-row">
       <label class="wb-slot">
         <input type="file" id="wb-model" accept=".xlsm,.xlsx" hidden>
@@ -87,8 +86,7 @@
 </main>
 
 <footer>
-  <p>Reports are published 45 days after a quarter ends, so the quarter being filed is
-     never the current one. This page works that out rather than asking.</p>
+  <p>Banking Reports are published 45 days after a quarter ends, so the quarter being filed usually is the previous quarter.</p>
 </footer>
 
 <script type="module" src="src/app.js"></script>
